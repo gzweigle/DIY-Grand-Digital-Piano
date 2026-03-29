@@ -1,0 +1,1 @@
+../StemPianoIPS2/src/six_channel_analog_00.h

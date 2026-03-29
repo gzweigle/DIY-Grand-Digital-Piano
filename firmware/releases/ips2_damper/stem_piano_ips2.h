@@ -1,0 +1,1 @@
+../StemPianoIPS2/src/stem_piano_ips2.h
