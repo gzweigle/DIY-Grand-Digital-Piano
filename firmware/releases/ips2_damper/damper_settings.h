@@ -31,6 +31,10 @@
 
 #define IP_STRING_LENGTH 128
 
+// uncomment the next line if the dampers sensors are under the keys
+// rather than above
+// #define REVERSE_DAMPERS
+
 class DamperSettings
 {
   

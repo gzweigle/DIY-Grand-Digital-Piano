@@ -237,6 +237,11 @@ void loop() {
         position_adc_counts[k] = 0;
         calibrated_floats[k] = 0.0;
       }
+#ifdef REVERSE_DAMPERS
+      else {
+        calibrated_floats[k] = 1 - calibrated_floats[k];
+      }
+#endif
     }
 
     B2B.SendDamperData(calibrated_floats);
