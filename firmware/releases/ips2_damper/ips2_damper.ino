@@ -57,7 +57,13 @@ Timing Tmg;
 TftDisplay Tft;
 
 void setup(void) {
+  // Load the settings. Must be first in the setup() function.
+  Set.SetAllSettingValues();
 
+  partial_setup();
+}
+
+void partial_setup(void) {
   // Serial port setup.
   Serial.begin(9600);
   Serial.println(".");
@@ -77,9 +83,6 @@ void setup(void) {
   Serial.println("https://github.com/stem-piano");
   Serial.println(".");
   Serial.println(".");
-
-  // Load the settings. Must be first in the setup() function.
-  Set.SetAllSettingValues();
 
   // Notification messages.
   if (Set.debug_level >= DEBUG_INFO) {
@@ -133,6 +136,7 @@ void setup(void) {
   delay(1000);
   Tft.Clear();
 
+  Serial.println("Press 1 to enter parameter edit mode.");
 }
 
 // After startup, wait before sending anything to MIDI
@@ -161,7 +165,98 @@ float damper_threshold_low = 0.33;
 float damper_threshold_med = 0.50;
 float damper_threshold_high = 0.75;
 
+int input_field = -1;
+bool keep_editing = false;
+
+void edit_parameters() {
+  // effectively "infinite" timeout (~ 1 month) when waiting for input
+  // in this function (parameter editing mode)
+  Serial.setTimeout(2073600000L);
+
+  Serial.println("Entered parameter editing mode.");
+  keep_editing = true;
+  while (keep_editing) {
+    Serial.println("Which parameter would you like to edit?");
+    Serial.println("0. NONE, done editing, resume normal operations");
+    Serial.println("1. debug_level");
+    Serial.println("2. sensor_v_max");
+    Serial.println("3. adc_reference");
+    Serial.println("4. adc_global_scale");
+    Serial.println("5. N/A");
+    Serial.println("6. calibration_threshold");
+
+    if (Serial.available() > 0) {
+      input_field = Serial.parseInt();
+      switch (input_field) {
+        case 0:
+           // taken care of later
+          break;
+        case 1:
+          // debug_level is INTEGER!
+          Serial.print("Enter debug_level, currently ");
+          Serial.println(Set.debug_level);
+          Set.debug_level = Serial.parseInt();
+          Serial.print("Set debug_level = ");
+          Serial.println(Set.debug_level);
+          break;
+        case 2:
+          Serial.print("Enter sensor_v_max, currently ");
+          Serial.println(Set.sensor_v_max);
+          Set.sensor_v_max = Serial.parseFloat();
+          Serial.print("Set sensor_v_max = ");
+          Serial.println(Set.sensor_v_max);
+          break;
+        case 3:
+          Serial.print("Enter adc_reference, currently ");
+          Serial.println(Set.adc_reference);
+          Set.adc_reference = Serial.parseFloat();
+          Serial.print("Set adc_reference = ");
+          Serial.println(Set.adc_reference);
+          break;
+        case 4:
+          Serial.print("Enter adc_global_scale, currently ");
+          Serial.println(Set.adc_global_scale);
+          Set.adc_global_scale = Serial.parseFloat();
+          Serial.print("Set adc_global_scale = ");
+          Serial.println(Set.adc_global_scale);
+          break;
+        case 6:
+          Serial.print("Enter calibration_threshold, currently ");
+          Serial.println(Set.calibration_threshold);
+          Set.calibration_threshold = Serial.parseFloat();
+          Serial.print("Set calibration_threshold = ");
+          Serial.println(Set.calibration_threshold);
+          break;
+
+        default:
+          Serial.print("Case ");
+          Serial.print(input_field);
+          Serial.println(" not supported");
+          break;
+      }
+      if (input_field == 0) {
+        keep_editing = false;
+      }
+    }
+    delay(100);
+  }
+
+  // restore default timeout outside of parameter editing mode
+  Serial.setTimeout(1000L);
+
+  // re-run the set up with the changed values (may be unnecessary)
+  Serial.println("Setting up the board with your changes");
+  partial_setup();
+}
+
 void loop() {
+
+  if (Serial.available() > 0) {
+    input_field = Serial.parseInt(); // defaults to zero if times out
+    if (input_field == 1) {
+      edit_parameters();
+    }
+  }
 
   Tmg.WarnOnProcessingInterval();
   DStat.DisplayProcessingIntervalStart();
